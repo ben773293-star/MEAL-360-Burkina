@@ -3,7 +3,8 @@ import pandas as pd
 import os
 from datetime import datetime
 import plotly.express as px
-
+from fpdf import FPDF
+import base64
 # --- CONFIGURATION DE L'INTERFACE ---
 st.set_page_config(page_title="Système MEAL 360 Intégral", page_icon="🌍", layout="wide")
 
@@ -174,7 +175,7 @@ else:
             fig = px.bar(df.groupby("Projet")[["Budget", "Depense"]].sum().reset_index(), x="Projet", y=["Budget", "Depense"], barmode="group", title="Budget vs Réalisé par Projet")
             st.plotly_chart(fig, use_container_width=True)
 
-    # --- 7. REDEVABILITÉ ---
+    # --- 7. REDEVABILITÉ --- 
     elif page == "👂 Redevabilité & Feedback":
         st.title("👂 Gestion des Plaintes et Feedbacks")
         with st.form("f_feedback"):
@@ -193,3 +194,19 @@ else:
             if st.form_submit_button("Capitaliser"):
                 sauvegarder_donnees(pd.DataFrame({"Leçon":[lecon], "Recom":[recom], "Date":[datetime.now().strftime("%Y-%m-%d")]}), "apprentissage.csv")
                 st.success("Savoir sauvegardé.")
+                st.markdown("---")
+st.subheader("📑 Génération de Rapport")
+if st.button("Générer le rapport PDF de l'Unité MEAL"):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(200, 10, txt="Rapport d'Audit MEAL - Burkina Faso", ln=True, align='C')
+    pdf.set_font("Arial", size=12)
+    pdf.ln(10)
+    pdf.cell(200, 10, txt="Ce rapport certifie la validité des données collectées sur le terrain.", ln=True)
+    
+    # Création du bouton de téléchargement
+    pdf_output = pdf.output(dest='S').encode('latin-1')
+    b64 = base64.b64encode(pdf_output).decode()
+    href = f'<a href="data:application/octet-stream;base64,{b64}" download="rapport_meal.pdf">📥 Cliquer ici pour télécharger le PDF</a>'
+    st.markdown(href, unsafe_allow_html=True)
